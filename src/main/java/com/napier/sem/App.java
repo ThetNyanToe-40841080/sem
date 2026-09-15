@@ -69,6 +69,43 @@ public class App
         }
     }
 
+    public Employee getEmployee(int ID)
+    {
+        try
+        {
+            // 1. Create an SQL statement object using the database connection
+            Statement stmt = con.createStatement();
+
+            // 2. Define the SQL query string using the passed-in ID
+            String strSelect =
+                    "SELECT emp_no, first_name, last_name "
+                            + "FROM employees "
+                            + "WHERE emp_no = " + ID;
+
+            // 3. Send query to MySQL and store results in ResultSet
+            ResultSet rset = stmt.executeQuery(strSelect);
+
+            // 4. Check if MySQL returned a record
+            if (rset.next())
+            {
+                // 5. Read fields from ResultSet and set them on a new Employee object
+                Employee emp = new Employee();
+                emp.emp_no = rset.getInt("emp_no");
+                emp.first_name = rset.getString("first_name");
+                emp.last_name = rset.getString("last_name");
+                return emp; // Return the populated object
+            }
+            else
+                return null; // Return null if no employee was found
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+            System.out.println("Failed to get employee details");
+            return null;
+        }
+    }
+
     public static void main(String[] args)
     {
         // Create new Application
@@ -76,6 +113,16 @@ public class App
 
         // Connect to database
         a.connect();
+
+        // Get Employee with ID 255530
+        Employee emp = a.getEmployee(255530);
+
+        // Check if employee was retrieved successfully
+        if (emp != null)
+        {
+            System.out.println("Employee ID: " + emp.emp_no);
+            System.out.println("Name: " + emp.first_name + " " + emp.last_name);
+        }
 
         // Disconnect from database
         a.disconnect();
