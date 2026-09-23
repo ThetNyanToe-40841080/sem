@@ -9,4 +9,4 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:25
 WORKDIR /tmp
 COPY --from=builder /tmp/target/seMethods-1.0-SNAPSHOT-jar-with-dependencies.jar /tmp/seMethods.jar
-ENTRYPOINT ["java", "-jar", "seMethods.jar"]
+ENTRYPOINT ["java", "-jar", "seMethods.jar", "db:3306"]

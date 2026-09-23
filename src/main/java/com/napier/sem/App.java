@@ -1,18 +1,13 @@
 package com.napier.sem;
 
 import java.sql.*;
+import java.util.ArrayList;
 
 public class App
 {
-    /**
-     * Connection to MySQL database.
-     */
     private Connection con = null;
 
-    /**
-     * Connect to the MySQL database.
-     */
-    public void connect()
+    public void connect(String location, int delay)
     {
         try
         {
@@ -31,10 +26,17 @@ public class App
             System.out.println("Connecting to database...");
             try
             {
-                // Wait a bit for db to start
-                Thread.sleep(30000);
-                // Connect to database
-                con = DriverManager.getConnection("jdbc:mysql://db:3306/employees?allowPublicKeyRetrieval=true&useSSL=false", "root", "example");
+                if (delay > 0)
+                {
+                    Thread.sleep(delay);
+                }
+
+                con = DriverManager.getConnection(
+                        "jdbc:mysql://" + location + "/employees?allowPublicKeyRetrieval=true&useSSL=false",
+                        "root",
+                        "example"
+                );
+
                 System.out.println("Successfully connected");
                 break;
             }
@@ -50,9 +52,6 @@ public class App
         }
     }
 
-    /**
-     * Disconnect from the MySQL database.
-     */
     public void disconnect()
     {
         if (con != null)
@@ -69,34 +68,36 @@ public class App
         }
     }
 
+    /**
+     * Get an employee by employee number.
+     */
     public Employee getEmployee(int ID)
     {
         try
         {
-            // 1. Create an SQL statement object using the database connection
             Statement stmt = con.createStatement();
 
-            // 2. Define the SQL query string using the passed-in ID
             String strSelect =
                     "SELECT emp_no, first_name, last_name "
                             + "FROM employees "
                             + "WHERE emp_no = " + ID;
 
-            // 3. Send query to MySQL and store results in ResultSet
             ResultSet rset = stmt.executeQuery(strSelect);
 
-            // 4. Check if MySQL returned a record
             if (rset.next())
             {
-                // 5. Read fields from ResultSet and set them on a new Employee object
                 Employee emp = new Employee();
+
                 emp.emp_no = rset.getInt("emp_no");
                 emp.first_name = rset.getString("first_name");
                 emp.last_name = rset.getString("last_name");
-                return emp; // Return the populated object
+
+                return emp;
             }
             else
-                return null; // Return null if no employee was found
+            {
+                return null;
+            }
         }
         catch (Exception e)
         {
@@ -105,6 +106,53 @@ public class App
             return null;
         }
     }
+
+    public ArrayList<Employee> getSalariesByRole(String title)
+    {
+        ArrayList<Employee> employees = new ArrayList<>();
+
+        try
+        {
+            String strSelect =
+                    "SELECT employees.emp_no, employees.first_name, " +
+                            "employees.last_name, salaries.salary " +
+                            "FROM employees, salaries, titles " +
+                            "WHERE employees.emp_no = salaries.emp_no " +
+                            "AND employees.emp_no = titles.emp_no " +
+                            "AND salaries.to_date = '9999-01-01' " +
+                            "AND titles.to_date = '9999-01-01' " +
+                            "AND titles.title = ? " +
+                            "ORDER BY employees.emp_no ASC";
+
+            PreparedStatement stmt = con.prepareStatement(strSelect);
+
+            stmt.setString(1, title);
+
+            ResultSet rset = stmt.executeQuery();
+
+            while (rset.next())
+            {
+                Employee emp = new Employee();
+
+                emp.emp_no = rset.getInt("emp_no");
+                emp.first_name = rset.getString("first_name");
+                emp.last_name = rset.getString("last_name");
+                emp.salary = rset.getInt("salary");
+                emp.title = title;
+
+                employees.add(emp);
+            }
+
+            return employees;
+        }
+        catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+            System.out.println("Failed to get salaries by role");
+            return employees;
+        }
+    }
+
     public void displayEmployee(Employee emp)
     {
         if (emp != null)
@@ -120,19 +168,38 @@ public class App
         }
     }
 
+    public void displaySalariesByRole(ArrayList<Employee> employees)
+    {
+        for (Employee emp : employees)
+        {
+            System.out.println(
+                    emp.emp_no + " "
+                            + emp.first_name + " "
+                            + emp.last_name + " "
+                            + emp.salary);
+        }
+    }
+
     public static void main(String[] args)
     {
-        // Create new Application
         App a = new App();
 
-        // Connect to database
-        a.connect();
-        // Get Employee
-        Employee emp = a.getEmployee(255530);
-        // Display results
-        a.displayEmployee(emp);
+        if (args.length < 1)
+        {
 
-        // Disconnect from database
+            a.connect("localhost:3306", 5000);
+        }
+        else
+        {
+            a.connect(args[0], 30000);
+        }
+
+
+        ArrayList<Employee> employees =
+                a.getSalariesByRole("Engineer");
+
+        a.displaySalariesByRole(employees);
+
         a.disconnect();
     }
 }
