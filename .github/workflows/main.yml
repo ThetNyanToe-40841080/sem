@@ -21,7 +21,7 @@ jobs:
       - name: Build with Maven
         run: mvn package
       - name: Unit Tests
-        run: mvn -Dtest=com.napier.devops.AppTest test
+        run: mvn -Dtest=com.napier.sem.AppTest test
       - name: Package and Run docker compose
         run: |
           mvn package -DskipTests
