@@ -40,8 +40,13 @@ jobs:
             mvn -Dtest=com.napier.devops.AppIntegrationTest test
             docker stop employees
             docker rm employees
-            docker image rm database    
-
+            docker image rm database
+        - name: CodeCov
+          uses: codecov/codecov-action@v2
+          with:
+            directory: ./target/site/jacoco
+            flags: Integration Tests
+            verbose: true
   build:
     name: Hello world action
     runs-on: ubuntu-latest
