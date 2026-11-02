@@ -8,3 +8,8 @@ FROM eclipse-temurin:25
 WORKDIR /tmp
 COPY --from=builder /tmp/target/seMethods-0.1.0.4-jar-with-dependencies.jar /tmp/seMethods.jar
 ENTRYPOINT ["java", "-jar", "seMethods.jar", "db:3306"]
+
+FROM amazoncorretto:17
+COPY ./target/devops.jar /tmp
+WORKDIR /tmp
+ENTRYPOINT ["java", "-jar", "devops.jar", "db:3306", "30000"]
