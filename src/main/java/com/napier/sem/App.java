@@ -2,9 +2,12 @@ package com.napier.sem;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class App
 {
+    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
     private Connection con = null;
 
     public void connect(String location, int delay) {
@@ -12,13 +15,13 @@ public class App
             // Load Database driver
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
-            System.out.println("Could not load SQL driver");
+            LOGGER.log(Level.SEVERE, "Could not load SQL driver", e);
             System.exit(-1);
         }
 
         int retries = 10;
         for (int i = 0; i < retries; ++i) {
-            System.out.println("Connecting to database...");
+            LOGGER.info("Connecting to database...");
             try {
                 // Wait a bit for db to start
                 Thread.sleep(delay);
@@ -26,13 +29,16 @@ public class App
                 con = DriverManager.getConnection("jdbc:mysql://" + location
                                 + "/employees?allowPublicKeyRetrieval=true&useSSL=false",
                         "root", "example");
-                System.out.println("Successfully connected");
+                LOGGER.info("Successfully connected");
                 break;
             } catch (SQLException sqle) {
-                System.out.println("Failed to connect to database attempt " +                                  Integer.toString(i));
-                System.out.println(sqle.getMessage());
+                if (LOGGER.isLoggable(Level.WARNING)) {
+                    LOGGER.warning("Failed to connect to database attempt " + i);
+                }
+                LOGGER.log(Level.WARNING, "Database connection error", sqle);
             } catch (InterruptedException ie) {
-                System.out.println("Thread interrupted? Should not happen.");
+                LOGGER.log(Level.WARNING, "Thread interrupted? Should not happen.", ie);
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -47,7 +53,7 @@ public class App
             }
             catch (Exception e)
             {
-                System.out.println("Error closing connection to database");
+                LOGGER.log(Level.SEVERE, "Error closing connection to database", e);
             }
         }
     }
@@ -114,8 +120,7 @@ public class App
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
-            System.out.println("Failed to get employee details");
+            LOGGER.log(Level.SEVERE, "Failed to get employee details", e);
             return null;
         }
     }
@@ -180,8 +185,7 @@ public class App
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
-            System.out.println("Failed to get employee details by name");
+            LOGGER.log(Level.SEVERE, "Failed to get employee details by name", e);
             return null;
         }
     }
@@ -231,8 +235,7 @@ public class App
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
-            System.out.println("Failed to get department details");
+            LOGGER.log(Level.SEVERE, "Failed to get department details", e);
             return null;
         }
     }
@@ -241,7 +244,7 @@ public class App
     {
         if (dept == null)
         {
-            System.out.println("No department supplied");
+            LOGGER.warning("No department supplied");
             return null;
         }
 
@@ -277,18 +280,18 @@ public class App
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
-            System.out.println("Failed to get salary details by department");
+            LOGGER.log(Level.SEVERE, "Failed to get salary details by department", e);
             return null;
         }
     }
 
+    @SuppressWarnings("PMD.SystemPrintln")
     public void printSalaries(ArrayList<Employee> employees)
     {
         // Check employees is not null
         if (employees == null)
         {
-            System.out.println("No employees");
+            LOGGER.warning("No employees");
             return;
         }
         // Print header
@@ -304,6 +307,7 @@ public class App
             System.out.println(emp_string);
         }
     }
+
     public void addEmployee(Employee emp)
     {
         try
@@ -317,10 +321,10 @@ public class App
         }
         catch (Exception e)
         {
-            System.out.println(e.getMessage());
-            System.out.println("Failed to add employee");
+            LOGGER.log(Level.SEVERE, "Failed to add employee", e);
         }
     }
+
     public static void main(String[] args) {
         // Create new Application and connect to database
         App a = new App();
@@ -333,7 +337,6 @@ public class App
 
         Department dept = a.getDepartment("Development");
         ArrayList<Employee> employees = a.getSalariesByDepartment(dept);
-
 
         // Print salary report
         a.printSalaries(employees);
